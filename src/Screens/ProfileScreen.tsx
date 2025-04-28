@@ -154,6 +154,18 @@ const ProfileScreen = ({ navigation }: TabsStackScreenProps<"Profile">) => {
     });
   };
 
+  const navigateToAddressScreen = () => {
+    if (!isAuthenticated) {
+      Alert.alert(
+        "Cần đăng nhập",
+        "Vui lòng đăng nhập để quản lý địa chỉ của bạn",
+        [{ text: "Đăng nhập", onPress: navigateToLogin }, { text: "Hủy", style: "cancel" }]
+      );
+      return;
+    }
+    navigation.navigate("AddressScreen");
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       {displayMessage && <DisplayMessage message={message} visible={() => setDisplayMessage(!displayMessage)} />}
@@ -212,7 +224,7 @@ const ProfileScreen = ({ navigation }: TabsStackScreenProps<"Profile">) => {
                   <MaterialIcons name="arrow-forward-ios" size={18} color="#aaa" />
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.optionItem}>
+                <TouchableOpacity style={styles.optionItem} onPress={navigateToAddressScreen}>
                   <Ionicons name="location" size={24} color="#2ECC71" style={styles.optionIcon} />
                   <Text style={styles.optionText}>Địa chỉ của tôi</Text>
                   <MaterialIcons name="arrow-forward-ios" size={18} color="#aaa" />

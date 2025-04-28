@@ -70,8 +70,8 @@ const AdminProductScreen = ({ navigation }: TabsStackScreenProps<"AdminProduct">
         setIsLoading(true);
         try {
             const [productsRes, categoriesRes] = await Promise.all([
-                axios.get('http://192.168.0.104:9000/product/getAllProducts'),
-                axios.get('http://192.168.0.104:9000/category')
+                axios.get('http://192.168.0.103:9000/product/getAllProducts'),
+                axios.get('http://192.168.0.103:9000/category')
             ]);
 
             setProducts(productsRes.data);
@@ -144,7 +144,7 @@ const AdminProductScreen = ({ navigation }: TabsStackScreenProps<"AdminProduct">
                     onPress: async () => {
                         setIsLoading(true);
                         try {
-                            await axios.delete(`http://192.168.0.104:9000/product/${productId}`);
+                            await axios.delete(`http://192.168.0.103:9000/product/${productId}`);
                             Alert.alert("Thành công", "Đã xóa sản phẩm");
                             fetchData();
                         } catch (error) {
@@ -234,14 +234,14 @@ const AdminProductScreen = ({ navigation }: TabsStackScreenProps<"AdminProduct">
 
         try {
             if (modalState.type === 'create') {
-                await axios.post('http://192.168.0.104:9000/product/createProduct', formData, {
+                await axios.post('http://192.168.0.103:9000/product/createProduct', formData, {
                     headers: {
                         'Content-Type': 'multipart/form-data',
                     },
                 });
                 Alert.alert('Thành công', 'Đã tạo sản phẩm mới');
             } else if (modalState.type === 'edit' && productForm._id) {
-                await axios.put(`http://192.168.0.104:9000/product/${productForm._id}`, formData, {
+                await axios.put(`http://192.168.0.103:9000/product/${productForm._id}`, formData, {
                     headers: {
                         'Content-Type': 'multipart/form-data',
                     },

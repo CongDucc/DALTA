@@ -54,11 +54,11 @@ const AdminScreen = ({ navigation }: TabsStackScreenProps<"Admin">) => {
         setIsLoading(true);
         try {
             // Fetch product count
-            const productsRes = await axios.get('http://192.168.0.104:9000/product/getAllProducts');
+            const productsRes = await axios.get('http://192.168.0.103:9000/product/getAllProducts');
             setProductCount(productsRes.data.length);
 
             // Fetch category count
-            const categoriesRes = await axios.get('http://192.168.0.104:9000/category');
+            const categoriesRes = await axios.get('http://192.168.0.103:9000/category');
             setCategoryCount(categoriesRes.data.length);
 
             // These endpoints would need to be implemented

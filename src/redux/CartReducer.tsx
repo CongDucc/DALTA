@@ -20,9 +20,9 @@ export const CartSlide = createSlice({
                 existingItem.quantity++;
             }
         },
-        clearCart: (state) => {
+        // Fix: Remove the reference to length property
+        clearCart: (state: CartItem) => {
             state.cart = [];
-            state.length = 0;
         },
         decreaseQuantity: (state: CartItem, action: PayloadAction<ProductListParams>) => {
             const existingItem = state.cart.find(item => item._id === action.payload._id);

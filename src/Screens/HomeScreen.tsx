@@ -16,7 +16,6 @@ import { TabsStackScreenProps } from "../Navigation/TabsNavigation";
 import { SafeAreaView } from "react-native-safe-area-context";
 import HeadersComponent from "../Components/HeaderComponents/HeaderComponent";
 import { ProductListParams, CategoryParams } from "../TypesCheck/HomeProp";
-import { CategoryCard } from "../Components/HomeScreenComponents/CategoryCard";
 import { fetchCategories, fetchProductsByCatID, fetchProductsByPrice, getImageUrl } from '../middleware/HomeMiddleware';
 import { CartState, SortOption } from "../TypesCheck/productCartTypes";
 import { useSelector } from "react-redux";
@@ -180,36 +179,52 @@ const HomeScreen = ({ navigation }: TabsStackScreenProps<"Home">) => {
   const productPages = filteredProducts?.length > 0 ? chunkArray(filteredProducts, 16) : [];
 
   return (
-    <SafeAreaView style={{ paddingTop: Platform.OS === "android" ? 1 : 0, flex: 1, backgroundColor: "white" }}>
+    <SafeAreaView style={styles.container}>
       {displayMessage && <DisplayMessage message={message} visible={() => setDisplayMessage(!displayMessage)} />}
       <HeadersComponent gotoCartScreen={gotoCartScreen} cartLength={cart.length} goToPrevios={goToPreviousScreen} />
 
-      {/* Search Bar */}
+      {/* Modern Search Bar */}
       <View style={styles.searchContainer}>
         <View style={styles.searchInputContainer}>
-          <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
+          <Ionicons name="search-outline" size={20} color="#666" style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search products..."
+            placeholderTextColor="#999"
             value={searchQuery}
             onChangeText={handleSearch}
           />
           {searchQuery ? (
-            <TouchableOpacity onPress={clearSearch}>
-              <Ionicons name="close-circle" size={20} color="#666" />
+            <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
+              <Ionicons name="close-circle" size={20} color="#999" />
             </TouchableOpacity>
           ) : null}
         </View>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={false} style={styles.mainScrollView}>
         {/* Categories Section */}
         <View style={styles.categorySection}>
-          <Text style={styles.sectionTitle}>Categories</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Categories</Text>
+            <TouchableOpacity onPress={() => {
+              setActiveCat("");
+              setActivePrice(null);
+              setSearchQuery("");
+            }}>
+              <Text style={styles.seeAllText}>See All</Text>
+            </TouchableOpacity>
+          </View>
+          
           {isCategoryLoading ? (
-            <Text style={styles.loadingText}>Loading categories...</Text>
+            <View style={styles.loadingContainer}>
+              <Text style={styles.loadingText}>Loading categories...</Text>
+            </View>
           ) : error ? (
-            <Text style={styles.errorText}>{error}</Text>
+            <View style={styles.errorContainer}>
+              <MaterialIcons name="error-outline" size={24} color="#FF6B6B" />
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
           ) : (
             <ScrollView
               horizontal
@@ -217,28 +232,36 @@ const HomeScreen = ({ navigation }: TabsStackScreenProps<"Home">) => {
               contentContainerStyle={styles.categoriesContainer}
             >
               {getCategory.map((item, index) => (
-                <CategoryCard
+                <TouchableOpacity
                   key={index}
-                  item={{
-                    name: item.name,
-                    images: [item.images[0]],
-                    _id: item._id
+                  style={[
+                    styles.categoryCard,
+                    activeCat === item._id && styles.activeCategoryCard
+                  ]}
+                  onPress={() => {
+                    setActiveCat(item._id);
+                    setActivePrice(null);
+                    setSearchQuery("");
                   }}
-                  catStyleProps={{
-                    height: 70,
-                    width: 70,
-                    radius: 35,
-                    resizeMode: "cover",
-                  }}
-                  catProps={{
-                    activeCat: activeCat,
-                    onPress: () => {
-                      setActiveCat(item._id);
-                      setActivePrice(null);
-                      setSearchQuery(""); // Clear search when changing categories
-                    },
-                  }}
-                />
+                >
+                  <View style={styles.categoryImageContainer}>
+                    <Image
+                      source={{ uri: getImageUrl(item.images[0]) || undefined }}
+                      style={styles.categoryImage}
+                      defaultSource={require('../../assets/cat404.jpg')}
+                    />
+                  </View>
+                  <Text 
+                    style={[
+                      styles.categoryName, 
+                      activeCat === item._id && styles.activeCategoryName
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {item.name}
+                  </Text>
+                  {activeCat === item._id && <View style={styles.categoryActiveIndicator} />}
+                </TouchableOpacity>
               ))}
             </ScrollView>
           )}
@@ -246,8 +269,10 @@ const HomeScreen = ({ navigation }: TabsStackScreenProps<"Home">) => {
 
         {/* Sort Options Section */}
         <View style={styles.filterSection}>
-          <Text style={styles.sectionTitle}>Sort By</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Sort By</Text>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filtersContainer}>
             <TouchableOpacity
               style={[styles.filterButton, sortOption === SortOption.NONE && styles.activeFilter]}
               onPress={() => handleSortChange(SortOption.NONE)}
@@ -277,19 +302,28 @@ const HomeScreen = ({ navigation }: TabsStackScreenProps<"Home">) => {
           </ScrollView>
         </View>
 
+        {/* Products Section */}
         <View style={styles.productSection}>
-          <Text style={styles.sectionTitle}>
-            {searchQuery
-              ? `Search results for "${searchQuery}"`
-              : activeCat
-                ? 'Selected Category'
-                : activePrice
-                  ? `Products under $${activePrice}`
-                  : 'All Products'
-            }
-          </Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>
+              {searchQuery
+                ? `Results for "${searchQuery}"`
+                : activeCat
+                  ? 'Selected Category'
+                  : activePrice
+                    ? `Products under $${activePrice}`
+                    : 'All Products'
+              }
+            </Text>
+            <Text style={styles.resultCount}>
+              {filteredProducts.length} {filteredProducts.length === 1 ? 'item' : 'items'}
+            </Text>
+          </View>
+          
           {isProductLoading ? (
-            <Text style={styles.loadingText}>Loading products...</Text>
+            <View style={styles.loadingContainer}>
+              <Text style={styles.loadingText}>Loading products...</Text>
+            </View>
           ) : filteredProducts?.length > 0 ? (
             <View>
               <FlatList
@@ -300,7 +334,7 @@ const HomeScreen = ({ navigation }: TabsStackScreenProps<"Home">) => {
                       {pageItems.map((item, index) => (
                         <TouchableOpacity
                           key={index}
-                          style={styles.gridProductCard}
+                          style={styles.productCard}
                           onPress={() => navigation.navigate("ProductDetails", {
                             _id: item._id,
                             name: item.name,
@@ -311,20 +345,34 @@ const HomeScreen = ({ navigation }: TabsStackScreenProps<"Home">) => {
                             inStock: true,
                             quantity: 1
                           })}
+                          activeOpacity={0.7}
                         >
-                          <Image
-                            source={{
-                              uri: getImageUrl(item.images[0]) || undefined
-                            }}
-                            style={styles.productImage}
-                            resizeMode="cover"
-                            defaultSource={require('../../assets/cat404.jpg')}
-                            onError={(e) => {
-                              console.log('Image load error:', e.nativeEvent.error);
-                            }}
-                          />
-                          <Text style={styles.productName} numberOfLines={2}>{item.name}</Text>
-                          <Text style={styles.productPrice}>${item.price}</Text>
+                          <View style={styles.productImageContainer}>
+                            <Image
+                              source={{
+                                uri: getImageUrl(item.images[0]) || undefined
+                              }}
+                              style={styles.productImage}
+                              resizeMode="cover"
+                              defaultSource={require('../../assets/cat404.jpg')}
+                            />
+                            {item.oldPrice && (
+                              <View style={styles.discountBadge}>
+                                <Text style={styles.discountText}>
+                                  {Math.round(((item.oldPrice - item.price) / item.oldPrice) * 100)}% OFF
+                                </Text>
+                              </View>
+                            )}
+                          </View>
+                          <View style={styles.productInfo}>
+                            <Text style={styles.productName} numberOfLines={2}>{item.name}</Text>
+                            <View style={styles.priceContainer}>
+                              <Text style={styles.productPrice}>${item.price}</Text>
+                              {item.oldPrice && (
+                                <Text style={styles.oldPrice}>${item.oldPrice}</Text>
+                              )}
+                            </View>
+                          </View>
                         </TouchableOpacity>
                       ))}
                     </View>
@@ -340,7 +388,7 @@ const HomeScreen = ({ navigation }: TabsStackScreenProps<"Home">) => {
                 decelerationRate="fast"
               />
 
-              {/* Pagination Dots */}
+              {/* Modern Pagination Dots */}
               {productPages.length > 1 && (
                 <View style={styles.paginationDots}>
                   {productPages.map((_, index) => (
@@ -348,7 +396,7 @@ const HomeScreen = ({ navigation }: TabsStackScreenProps<"Home">) => {
                       key={index}
                       style={[
                         styles.paginationDot,
-                        { backgroundColor: currentPage === index ? '#2ECC71' : '#ccc' }
+                        currentPage === index ? styles.activePaginationDot : {}
                       ]}
                     />
                   ))}
@@ -356,9 +404,17 @@ const HomeScreen = ({ navigation }: TabsStackScreenProps<"Home">) => {
               )}
             </View>
           ) : (
-            <Text style={styles.noProductsText}>
-              {searchQuery ? `No products matching "${searchQuery}"` : "No products available"}
-            </Text>
+            <View style={styles.emptyResultsContainer}>
+              <Ionicons name="search-outline" size={50} color="#ccc" />
+              <Text style={styles.noProductsText}>
+                {searchQuery ? `No products matching "${searchQuery}"` : "No products available"}
+              </Text>
+              {searchQuery && (
+                <TouchableOpacity style={styles.resetButton} onPress={clearSearch}>
+                  <Text style={styles.resetButtonText}>Clear Search</Text>
+                </TouchableOpacity>
+              )}
+            </View>
           )}
         </View>
       </ScrollView>
@@ -369,8 +425,10 @@ const HomeScreen = ({ navigation }: TabsStackScreenProps<"Home">) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
-    paddingTop: Platform.OS === "android" ? 40 : 0,
+    backgroundColor: '#f8f9fa',
+  },
+  mainScrollView: {
+    flex: 1,
   },
   searchContainer: {
     padding: 15,
@@ -382,9 +440,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#f5f5f5',
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    height: 45,
+    paddingHorizontal: 15,
+    borderRadius: 12,
+    height: 48,
+    borderWidth: 1,
+    borderColor: '#ebebeb',
   },
   searchIcon: {
     marginRight: 10,
@@ -393,101 +453,191 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     color: '#333',
+    height: '100%',
   },
-  categorySection: {
-    padding: 15,
-    backgroundColor: '#fff',
-    marginBottom: 10,
+  clearButton: {
+    padding: 5,
   },
-  categoriesContainer: {
-    paddingVertical: 10,
-    gap: 15,
-  },
-  productSection: {
-    padding: 15,
-    backgroundColor: '#fff',
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 15,
     color: '#333',
   },
-  loadingText: {
-    textAlign: 'center',
-    color: '#666',
-    padding: 10,
-  },
-  errorText: {
-    textAlign: 'center',
-    color: 'red',
-    padding: 10,
-  },
-  noProductsText: {
-    textAlign: 'center',
-    color: '#666',
-    padding: 20,
-  },
-  productCard: {
-    width: 160,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 10,
-    marginRight: 15,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
-  productImage: {
-    width: '100%',
-    height: 120,
-    borderRadius: 8,
-  },
-  productName: {
-    marginTop: 8,
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-  },
-  productPrice: {
-    marginTop: 4,
-    fontSize: 16,
-    fontWeight: 'bold',
+  seeAllText: {
     color: '#2ECC71',
+    fontWeight: '600',
+    fontSize: 14,
   },
-  filterSection: {
+  resultCount: {
+    color: '#666',
+    fontSize: 14,
+  },
+  categorySection: {
     padding: 15,
     backgroundColor: '#fff',
     marginTop: 10,
     marginBottom: 10,
+    borderRadius: 12,
+    marginHorizontal: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3.84,
+    elevation: 2,
+  },
+  categoriesContainer: {
+    paddingVertical: 10,
+    paddingHorizontal: 5,
+  },
+  categoryCard: {
+    alignItems: 'center',
+    marginRight: 20,
+    width: 80,
+  },
+  activeCategoryCard: {
+    transform: [{ scale: 1.05 }],
+  },
+  categoryImageContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#f5f5f5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#ebebeb',
+    overflow: 'hidden',
+  },
+  categoryImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 30,
+  },
+  categoryName: {
+    fontSize: 12,
+    color: '#555',
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  activeCategoryName: {
+    color: '#2ECC71',
+    fontWeight: 'bold',
+  },
+  categoryActiveIndicator: {
+    width: 15,
+    height: 3,
+    backgroundColor: '#2ECC71',
+    borderRadius: 3,
+    marginTop: 5,
+  },
+  filterSection: {
+    padding: 15,
+    backgroundColor: '#fff',
+    marginBottom: 10,
+    borderRadius: 12,
+    marginHorizontal: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3.84,
+    elevation: 2,
+  },
+  filtersContainer: {
+    paddingVertical: 5,
   },
   filterButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#F0F0F0',
+    backgroundColor: '#f5f5f5',
     marginRight: 10,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: '#ebebeb',
   },
   activeFilter: {
     backgroundColor: '#2ECC71',
     borderColor: '#2ECC71',
   },
   filterText: {
-    fontSize: 14,
-    color: '#333',
+    fontSize: 13,
+    color: '#555',
     fontWeight: '500',
     marginRight: 5,
   },
   activeFilterText: {
     color: '#FFFFFF',
   },
-  // Grid layout styles
+  productSection: {
+    padding: 15,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    marginHorizontal: 15,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3.84,
+    elevation: 2,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    padding: 20,
+  },
+  loadingText: {
+    textAlign: 'center',
+    color: '#777',
+    fontSize: 14,
+  },
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  errorText: {
+    textAlign: 'center',
+    color: '#FF6B6B',
+    marginLeft: 10,
+    fontSize: 14,
+  },
+  emptyResultsContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 30,
+  },
+  noProductsText: {
+    textAlign: 'center',
+    color: '#777',
+    marginTop: 15,
+    fontSize: 15,
+  },
+  resetButton: {
+    marginTop: 15,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  resetButtonText: {
+    color: '#555',
+    fontWeight: '500',
+  },
   productPage: {
     paddingRight: 0,
   },
@@ -496,31 +646,82 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'space-between',
   },
-  gridProductCard: {
-    width: '48%', // Almost half width to fit 2 in a row
+  productCard: {
+    width: '48%',
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    padding: 10,
     marginBottom: 15,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#f0f0f0',
+  },
+  productImageContainer: {
+    width: '100%',
+    height: 150,
+    position: 'relative',
+  },
+  productImage: {
+    width: '100%',
+    height: '100%',
+  },
+  discountBadge: {
+    position: 'absolute',
+    top: 10,
+    left: 0,
+    backgroundColor: '#FF6B6B',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderTopRightRadius: 8,
+    borderBottomRightRadius: 8,
+  },
+  discountText: {
+    color: '#FFF',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  productInfo: {
+    padding: 10,
+  },
+  productName: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#333',
+    marginBottom: 5,
+    height: 40,
+  },
+  priceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  productPrice: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#2ECC71',
+  },
+  oldPrice: {
+    fontSize: 12,
+    color: '#999',
+    textDecorationLine: 'line-through',
+    marginLeft: 5,
   },
   paginationDots: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 15,
-    marginBottom: 10,
   },
   paginationDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    marginHorizontal: 4,
-  }
+    backgroundColor: '#ddd',
+    marginHorizontal: 3,
+  },
+  activePaginationDot: {
+    backgroundColor: '#2ECC71',
+    width: 16,
+    borderRadius: 4,
+  },
 });
 
 export default HomeScreen;

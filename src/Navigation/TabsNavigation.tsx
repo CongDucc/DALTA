@@ -9,9 +9,11 @@ import ProductDetails from "../Screens/ProductDetails";
 import AdminScreen from "../Screens/AdminScreen";
 import AdminProductScreen from "../Screens/AdminScreens/AdminProductScreen";
 import AdminCategoryScreen from "../Screens/AdminScreens/AdminCategoryScreen";
+import AddressScreen from "../Screens/AddressScreen";
 import { Entypo, AntDesign, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useContext } from "react";
 import { UserType } from "../Components/LoginRegisterComponent/UserContext";
+import { StyleSheet, View, Text } from "react-native";
 
 export type TabsStackParams = {
     Home: undefined;
@@ -39,6 +41,7 @@ export type TabsStackParams = {
         inStock?: boolean;
         quantity?: number;
     };
+    AddressScreen: undefined;
 };
 const TabsStack = createBottomTabNavigator<TabsStackParams>();
 
@@ -51,18 +54,30 @@ const TabsNavigator = () => {
     const { isAdmin } = useContext(UserType);
 
     return (
-        <TabsStack.Navigator screenOptions={{ tabBarShowLabel: false }}>
+        <TabsStack.Navigator 
+            screenOptions={{ 
+                tabBarShowLabel: false,
+                tabBarStyle: styles.tabBar,
+                tabBarItemStyle: styles.tabBarItem,
+                tabBarActiveTintColor: '#00970a',
+                tabBarInactiveTintColor: '#000',
+            }}
+        >
             <TabsStack.Screen
                 name="Home"
                 component={HomeScreen}
                 options={{
                     headerShown: false,
-                    tabBarIcon: ({ focused }) =>
-                        focused ? (
-                            <Entypo name="home" size={24} color="#00970a" />
-                        ) : (
-                            <AntDesign name="home" size={24} color="#000" />
-                        )
+                    tabBarIcon: ({ focused, color }) => (
+                        <View style={styles.tabIconContainer}>
+                            {focused ? (
+                                <Entypo name="home" size={24} color={color} />
+                            ) : (
+                                <AntDesign name="home" size={24} color={color} />
+                            )}
+                            <Text style={[styles.tabLabel, { color }]}>Home</Text>
+                        </View>
+                    )
                 }}
             />
 
@@ -71,12 +86,12 @@ const TabsNavigator = () => {
                 component={CartScreen}
                 options={{
                     headerShown: false,
-                    tabBarIcon: ({ focused }) =>
-                        focused ? (
-                            <AntDesign name="shoppingcart" size={24} color="#00970a" />
-                        ) : (
-                            <AntDesign name="shoppingcart" size={24} color="#000" />
-                        )
+                    tabBarIcon: ({ focused, color }) => (
+                        <View style={styles.tabIconContainer}>
+                            <AntDesign name="shoppingcart" size={24} color={color} />
+                            <Text style={[styles.tabLabel, { color }]}>Cart</Text>
+                        </View>
+                    )
                 }}
             />
 
@@ -85,10 +100,15 @@ const TabsNavigator = () => {
                 component={PaymentScreen}
                 options={{
                     headerShown: false,
-                    tabBarIcon: ({ focused }) => focused ? (
-                        <Ionicons name="copy" size={24} color="#00970a" />
-                    ) : (
-                        <Ionicons name="copy-outline" size={24} color="#000" />
+                    tabBarIcon: ({ focused, color }) => (
+                        <View style={styles.tabIconContainer}>
+                            {focused ? (
+                                <Ionicons name="copy" size={24} color={color} />
+                            ) : (
+                                <Ionicons name="copy-outline" size={24} color={color} />
+                            )}
+                            <Text style={[styles.tabLabel, { color }]}>Orders</Text>
+                        </View>
                     )
                 }}
             />
@@ -98,10 +118,15 @@ const TabsNavigator = () => {
                 component={ProfileScreen}
                 options={{
                     headerShown: false,
-                    tabBarIcon: ({ focused }) => focused ? (
-                        <Ionicons name="person" size={24} color="#00970a" />
-                    ) : (
-                        <Ionicons name="person-outline" size={24} color="#000" />
+                    tabBarIcon: ({ focused, color }) => (
+                        <View style={styles.tabIconContainer}>
+                            {focused ? (
+                                <Ionicons name="person" size={24} color={color} />
+                            ) : (
+                                <Ionicons name="person-outline" size={24} color={color} />
+                            )}
+                            <Text style={[styles.tabLabel, { color }]}>Profile</Text>
+                        </View>
                     )
                 }}
             />
@@ -112,10 +137,11 @@ const TabsNavigator = () => {
                     component={AdminScreen}
                     options={{
                         headerShown: false,
-                        tabBarIcon: ({ focused }) => focused ? (
-                            <MaterialIcons name="admin-panel-settings" size={24} color="#00970a" />
-                        ) : (
-                            <MaterialIcons name="admin-panel-settings" size={24} color="#000" />
+                        tabBarIcon: ({ focused, color }) => (
+                            <View style={styles.tabIconContainer}>
+                                <MaterialIcons name="admin-panel-settings" size={24} color={color} />
+                                <Text style={[styles.tabLabel, { color }]}>Admin</Text>
+                            </View>
                         )
                     }}
                 />
@@ -127,7 +153,7 @@ const TabsNavigator = () => {
                 component={AdminProductScreen}
                 options={{
                     headerShown: false,
-                    tabBarButton: () => null, // Hides this tab from the tab bar
+                    tabBarButton: () => null,
                 }}
             />
 
@@ -136,7 +162,7 @@ const TabsNavigator = () => {
                 component={AdminCategoryScreen}
                 options={{
                     headerShown: false,
-                    tabBarButton: () => null, // Hides this tab from the tab bar
+                    tabBarButton: () => null,
                 }}
             />
 
@@ -145,11 +171,63 @@ const TabsNavigator = () => {
                 component={ProductDetails}
                 options={{
                     headerShown: false,
-                    tabBarButton: () => null, // Hides this tab from the tab bar
+                    tabBarButton: () => null,
+                }}
+            />
+
+            <TabsStack.Screen
+                name="AddressScreen"
+                component={AddressScreen}
+                options={{
+                    headerShown: false,
+                    tabBarButton: () => null,
                 }}
             />
         </TabsStack.Navigator>
     );
 };
+
+const styles = StyleSheet.create({
+    tabBar: {
+        height: 65,
+        paddingBottom: 10,
+        paddingTop: 5,
+        backgroundColor: '#fff',
+        borderTopWidth: 1,
+        borderTopColor: '#eee',
+        elevation: 8,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: -2,
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 3.84,
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        alignItems: 'center',
+    },
+    tabBarItem: {
+        flex: 1,
+        height: 50,
+        padding: 0,
+        margin: 0,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    tabIconContainer: {
+        width: '100%',
+        height: '100%',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingTop: 5,
+    },
+    tabLabel: {
+        fontSize: 10,
+        marginTop: 3,
+        fontWeight: '500',
+        textAlign: 'center',
+    },
+});
 
 export default TabsNavigator;

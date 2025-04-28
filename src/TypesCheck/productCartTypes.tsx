@@ -1,3 +1,5 @@
+import { JSX } from "react";
+
 export interface ProductListParams {
     _id: string;
     images: [string];
